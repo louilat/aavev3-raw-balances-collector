@@ -36,13 +36,20 @@ class AaveV3RawBalancesCollector:
         ]
         all_users_balances = DataFrame()
         for _, user in users.iterrows():
-            user_address = user["active_user_address"]
-            response = self.data_provider_contract.functions.getUserReservesData(
-                "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e", user_address
-            ).call(block_identifier=self.block_number)[0]
-            user_data_table = DataFrame(response, columns=user_reserve_columns)
-            user_data_table["user_address"] = user_address
-            all_users_balances = pd.concat((all_users_balances, user_data_table))
+            try:
+                user_address = user["active_user_address"]
+                response = self.data_provider_contract.functions.getUserReservesData(
+                    "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e", user_address
+                ).call(block_identifier=self.block_number)[0]
+                user_data_table = DataFrame(response, columns=user_reserve_columns)
+                user_data_table["user_address"] = user_address
+                user_data_table = user_data_table[
+                    (user_data_table.scaledATokenBalance > 0)
+                    | (user_data_table.scaledVariableDebt > 0)
+                ]
+                all_users_balances = pd.concat((all_users_balances, user_data_table))
+            except Exception as e:
+                print(f"Warning: got an error for user {user_address}: {e}")
 
         self.all_users_balances = all_users_balances
         return all_users_balances
