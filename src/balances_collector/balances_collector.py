@@ -6,7 +6,9 @@ from web3 import Web3
 
 
 class AaveV3RawBalancesCollector:
-    def __init__(self, provider_url: str, contract_abi: dict):
+    def __init__(
+        self, provider_url: str, contract_abi: dict, block_number: int = "latest"
+    ):
         self.provider_url = provider_url
         self.w3 = Web3(Web3.HTTPProvider(provider_url))
         if self.w3.is_connected():
@@ -19,6 +21,7 @@ class AaveV3RawBalancesCollector:
         self.data_provider_contract = self.w3.eth.contract(
             address=self.contract_address, abi=contract_abi
         )
+        self.block_number = block_number
 
         self.all_users_balances: DataFrame = DataFrame()
         self.reserves_data: DataFrame = DataFrame()
@@ -36,7 +39,7 @@ class AaveV3RawBalancesCollector:
             user_address = user["active_user_address"]
             response = self.data_provider_contract.functions.getUserReservesData(
                 "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e", user_address
-            ).call()[0]
+            ).call(block_identifier=self.block_number)[0]
             user_data_table = DataFrame(response, columns=user_reserve_columns)
             user_data_table["user_address"] = user_address
             all_users_balances = pd.concat((all_users_balances, user_data_table))
@@ -68,7 +71,7 @@ class AaveV3RawBalancesCollector:
         response, base_currency_info = (
             self.data_provider_contract.functions.getReservesData(
                 "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e"
-            ).call()
+            ).call(block_identifier=self.block_number)
         )
         response = [
             reserve_data[0:17] + tuple((reserve_data[22],)) for reserve_data in response
@@ -121,6 +124,11 @@ class AaveV3RawBalancesCollector:
             processed_balances.currentVariableDebt
             * processed_balances.underlyingTokenPriceUSD
         )
+
+        processed_balances = processed_balances[
+            (processed_balances.currentATokenBalanceUSD > 0.05)
+            | (processed_balances.currentVariableDebtUSD > 0.05)
+        ]
 
         self.processed_balances = processed_balances
         return processed_balances
