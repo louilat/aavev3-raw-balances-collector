@@ -25,9 +25,9 @@ PROVIDER_URL = os.environ["PROVIDER_URL"]
 
 client_s3 = boto3.client(
     "s3",
-    endpoint_url = 'https://'+'minio.lab.sspcloud.fr',
-    aws_access_key_id= AWS_ACCESS_KEY, 
-    aws_secret_access_key= AWS_SECRET_KEY, 
+    endpoint_url="https://" + "minio.lab.sspcloud.fr",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
 )
 
 print("STEP 0: Extracting data...")
@@ -59,11 +59,17 @@ print("STEP 3: Uploading outputs to s3...")
 
 buffer = io.StringIO()
 collector.all_users_balances.to_csv(buffer, index=False)
-client_s3.put_object(Body=buffer.getvalue(), Bucket="llatournerie", Key=output_path + "active_users_balances.csv")
+client_s3.put_object(
+    Body=buffer.getvalue(),
+    Bucket="llatournerie",
+    Key=output_path + "active_users_balances.csv",
+)
 
 buffer = io.StringIO()
 collector.reserves_data.to_csv(buffer, index=False)
-client_s3.put_object(Body=buffer.getvalue(), Bucket="llatournerie", Key=output_path + "reserves_data.csv")
+client_s3.put_object(
+    Body=buffer.getvalue(), Bucket="llatournerie", Key=output_path + "reserves_data.csv"
+)
 
 print(f"   --> Outputs successfully generated at: {output_path}")
 
