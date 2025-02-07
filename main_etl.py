@@ -55,10 +55,14 @@ print("STEP 2: Collecting reserves data...")
 
 collector.collect_reserves_data()
 
-print("STEP 3: Uploading outputs to s3...")
+print("STEP 3: Processing users balances...")
+
+collector.process_raw_balances()
+
+print("STEP 4: Uploading outputs to s3...")
 
 buffer = io.StringIO()
-collector.all_users_balances.to_csv(buffer, index=False)
+collector.processed_balances.to_csv(buffer, index=False)
 client_s3.put_object(
     Body=buffer.getvalue(),
     Bucket="llatournerie",

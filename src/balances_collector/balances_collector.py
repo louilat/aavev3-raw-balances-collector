@@ -22,6 +22,7 @@ class AaveV3RawBalancesCollector:
 
         self.all_users_balances: DataFrame = DataFrame()
         self.reserves_data: DataFrame = DataFrame()
+        self.processed_balances: DataFrame = DataFrame()
 
     def collect_raw_balances(self, users: DataFrame):
         user_reserve_columns = [
@@ -37,7 +38,7 @@ class AaveV3RawBalancesCollector:
                 "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e", user_address
             ).call()[0]
             user_data_table = DataFrame(response, columns=user_reserve_columns)
-            all_users_balances = pd.concat(all_users_balances, user_data_table)
+            all_users_balances = pd.concat((all_users_balances, user_data_table))
 
         self.all_users_balances = all_users_balances
         return all_users_balances
@@ -72,4 +73,35 @@ class AaveV3RawBalancesCollector:
         return reserves_data
 
     def process_raw_balances(self):
-        pass
+        merge_columns = [
+            "underlyingAsset",
+            "name",
+            "symbol",
+            "decimals",
+            "baseLTVasCollateral",
+            "reserveLiquidationThreshold",
+            "reserveLiquidationBonus",
+            "usageAsCollateralEnabled",
+            "liquidityIndex",
+            "variableBorrowIndex",
+        ]
+        processed_balances = self.all_users_balances.merge(
+            self.reserves_data[merge_columns], how="left", on="underlyingAsset"
+        )
+
+        processed_balances.liquidityIndex /= 1e27
+        processed_balances.variableBorrowIndex /= 1e27
+
+        processed_balances["currentATokenBalance"] = (
+            processed_balances.scaledATokenBalance
+            / processed_balances.decimals
+            * processed_balances.liquidityIndex
+        )
+        processed_balances["scaledVariableDebt"] = (
+            processed_balances.scaledVariableDebt
+            / processed_balances.decimals
+            * processed_balances.variableBorrowIndex
+        )
+
+        self.processed_balances = processed_balances
+        return processed_balances
