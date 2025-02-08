@@ -15,8 +15,8 @@ users_list_input_path = None
 if users_list_input_path is None:
     yesterday = datetime.today() - timedelta(days=1)
     snapshot_date = yesterday.strftime("%Y-%m-%d")
-    users_list_input_path = f"aave-events-collector/daily-decoded-events/decoded_events_snapshot_date={snapshot_date}/all_active_users.csv"
-    output_path = f"aave-events-collector/daily-users-balances/users_balances_snapshot_date={snapshot_date}/"
+    users_list_input_path = f"aave-raw-datasource/daily-decoded-events/decoded_events_snapshot_date={snapshot_date}/all_active_users.csv"
+    output_path = f"aave-raw-datasource/daily-users-balances/users_balances_snapshot_date={snapshot_date}/"
 
 
 AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
