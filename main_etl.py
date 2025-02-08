@@ -22,12 +22,16 @@ if users_list_input_path is None:
 AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
 AWS_SECRET_KEY = os.environ["AWS_SECRET_KEY"]
 PROVIDER_URL = os.environ["PROVIDER_URL"]
+AWS_API_ENDPOINT = "https://minio-simple.lab.groupe-genes.fr"
+BUCKET = "projet-datalab-group-jprat"
+VERIFY = False
 
 client_s3 = boto3.client(
     "s3",
-    endpoint_url="https://" + "minio.lab.sspcloud.fr",
+    endpoint_url=AWS_API_ENDPOINT,
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_KEY,
+    verify=VERIFY,
 )
 
 print("STEP 0: Extracting data...")
@@ -39,7 +43,7 @@ with open("./src/abi/ui_pool_data_provider.json") as file:
 
 print("   --> Extracting users list...")
 
-object = client_s3.get_object(Bucket="llatournerie", Key=users_list_input_path)
+object = client_s3.get_object(Bucket=BUCKET, Key=users_list_input_path)
 users_data = pd.read_csv(object["Body"])
 
 print("STEP 1: Collecting raw users balances...")
@@ -65,14 +69,14 @@ buffer = io.StringIO()
 collector.processed_balances.to_csv(buffer, index=False)
 client_s3.put_object(
     Body=buffer.getvalue(),
-    Bucket="llatournerie",
+    Bucket=BUCKET,
     Key=output_path + "active_users_balances.csv",
 )
 
 buffer = io.StringIO()
 collector.reserves_data.to_csv(buffer, index=False)
 client_s3.put_object(
-    Body=buffer.getvalue(), Bucket="llatournerie", Key=output_path + "reserves_data.csv"
+    Body=buffer.getvalue(), Bucket=BUCKET, Key=output_path + "reserves_data.csv"
 )
 
 print(f"   --> Outputs successfully generated at: {output_path}")
