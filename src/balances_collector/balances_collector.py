@@ -73,6 +73,11 @@ class AaveV3RawBalancesCollector:
             "liquidityRate",
             "variableBorrowRate",
             "lastUpdateTimestamp",
+            "aTokenAddress",
+            "variableDebtTokenAddress",
+            "interestRateStrategyAddress",
+            "availableLiquidity",
+            "totalScaledVariableDebt",
             "underlyingTokenPriceUSD",
         ]
         response, base_currency_info = (
@@ -81,7 +86,7 @@ class AaveV3RawBalancesCollector:
             ).call(block_identifier=self.block_number)
         )
         response = [
-            reserve_data[0:17] + tuple((reserve_data[22],)) for reserve_data in response
+            reserve_data[0:23] for reserve_data in response
         ]
         reserves_data = DataFrame(response, columns=reserve_data_columns)
         reserves_data.underlyingTokenPriceUSD = (
