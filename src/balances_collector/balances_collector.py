@@ -50,6 +50,12 @@ class AaveV3RawBalancesCollector:
                 all_users_balances = pd.concat((all_users_balances, user_data_table))
             except Exception as e:
                 print(f"Warning: got an error for user {user_address}: {e}")
+        
+        if self.block_number == "latest":
+            block_number = self.w3.eth.get_block_number()
+        else:
+            block_number = self.block_number
+        all_users_balances["snapshot_block"] = block_number
 
         self.all_users_balances = all_users_balances
         return all_users_balances
