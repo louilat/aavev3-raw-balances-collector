@@ -11,8 +11,10 @@ from src.balances_collector.balances_collector import AaveV3RawBalancesCollector
 # Run parameters
 output_path = None
 users_list_input_path = None
+block_number = None
 
 if users_list_input_path is None:
+    block_number = "latest"
     yesterday = datetime.today() - timedelta(days=1)
     snapshot_date = yesterday.strftime("%Y-%m-%d")
     users_list_input_path = f"aave-raw-datasource/daily-decoded-events/decoded_events_snapshot_date={snapshot_date}/all_active_users.csv"
@@ -51,6 +53,7 @@ print("STEP 1: Collecting raw users balances...")
 collector = AaveV3RawBalancesCollector(
     provider_url=PROVIDER_URL,
     contract_abi=data_provider_abi,
+    block_number=block_number,
 )
 
 collector.collect_raw_balances(users_data)
