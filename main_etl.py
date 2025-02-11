@@ -6,7 +6,9 @@ import io
 import pandas as pd
 from datetime import datetime, timedelta
 import json
+from web3 import Web3
 from src.balances_collector.balances_collector import AaveV3RawBalancesCollector
+from src.treasury.reserves_treasury import collect_reserves_treasury
 
 # Run parameters
 output_path = None
@@ -36,22 +38,27 @@ client_s3 = boto3.client(
     verify=VERIFY,
 )
 
-print("STEP 0: Extracting data...")
+w3 = Web3(Web3.HTTPProvider(PROVIDER_URL))
+if w3.is_connected():
+    print("Successfully connected to provider")
+else:
+    raise Exception("Could not connect to provider")
+
+
+print("STEP 0: Extracting and collecting data...")
 
 print("   --> Extracting UIPoolDataProvider abi...")
-
 with open("./src/abi/ui_pool_data_provider.json") as file:
     data_provider_abi = json.load(file)
 
 print("   --> Extracting users list...")
-
 object = client_s3.get_object(Bucket=BUCKET, Key=users_list_input_path)
 users_data = pd.read_csv(object["Body"])
 
 print("STEP 1: Collecting raw users balances...")
 
 collector = AaveV3RawBalancesCollector(
-    provider_url=PROVIDER_URL,
+    w3=w3,
     contract_abi=data_provider_abi,
     block_number=block_number,
 )
@@ -66,6 +73,12 @@ print("STEP 3: Processing users balances...")
 
 collector.process_raw_balances()
 
+print("STEP 4: Collecting and matching reserves treasury with reserves data...")
+
+reserves_data = collect_reserves_treasury(
+    w3=w3, reserves_data=collector.reserves_data, block_number=block_number
+)
+
 print("STEP 4: Uploading outputs to s3...")
 
 buffer = io.StringIO()
@@ -77,7 +90,7 @@ client_s3.put_object(
 )
 
 buffer = io.StringIO()
-collector.reserves_data.to_csv(buffer, index=False)
+reserves_data.to_csv(buffer, index=False)
 client_s3.put_object(
     Body=buffer.getvalue(), Bucket=BUCKET, Key=output_path + "reserves_data.csv"
 )

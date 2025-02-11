@@ -6,16 +6,8 @@ from web3 import Web3
 
 
 class AaveV3RawBalancesCollector:
-    def __init__(
-        self, provider_url: str, contract_abi: dict, block_number: int = "latest"
-    ):
-        self.provider_url = provider_url
-        self.w3 = Web3(Web3.HTTPProvider(provider_url))
-        if self.w3.is_connected():
-            print("Successfully connected to provider")
-        else:
-            raise Exception("Could not connect to provider")
-
+    def __init__(self, w3, contract_abi: dict, block_number: int = "latest"):
+        self.w3 = w3
         self.contract_address = "0x3F78BBD206e4D3c504Eb854232EdA7e47E9Fd8FC"
         self.contract_abi = contract_abi
         self.data_provider_contract = self.w3.eth.contract(
@@ -50,7 +42,7 @@ class AaveV3RawBalancesCollector:
                 all_users_balances = pd.concat((all_users_balances, user_data_table))
             except Exception as e:
                 print(f"Warning: got an error for user {user_address}: {e}")
-        
+
         if self.block_number == "latest":
             block_number = self.w3.eth.get_block_number()
         else:
@@ -91,9 +83,7 @@ class AaveV3RawBalancesCollector:
                 "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e"
             ).call(block_identifier=self.block_number)
         )
-        response = [
-            reserve_data[0:23] for reserve_data in response
-        ]
+        response = [reserve_data[0:23] for reserve_data in response]
         reserves_data = DataFrame(response, columns=reserve_data_columns)
         reserves_data.underlyingTokenPriceUSD = (
             reserves_data.underlyingTokenPriceUSD / 10 ** base_currency_info[-1]
