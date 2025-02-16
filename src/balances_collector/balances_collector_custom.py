@@ -166,6 +166,7 @@ class AaveV3RawBalancesCollectorCustom:
                 }
             )
             users_positions = pd.concat((users_positions, user_data))
+        users_positions["snapshot_block"] = block_identifier
         self.all_users_positions = users_positions
         return users_positions
 
