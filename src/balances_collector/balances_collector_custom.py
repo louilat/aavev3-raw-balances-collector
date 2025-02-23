@@ -219,6 +219,7 @@ class AaveV3RawBalancesCollectorCustom:
 
     def _read_reserve_configuration(self, configuration: int) -> dict:
         binary = bin(configuration)
+        reserve_factor = int(binary[-79:-64], 2) if binary[-79:-64] != "" else 0
         configuration_dict = {
             "baseLTVasCollateral": int(binary[-15:], 2),
             "reserveLiquidationThreshold": int(binary[-31:-16], 2),
@@ -227,7 +228,7 @@ class AaveV3RawBalancesCollectorCustom:
             "isActive": bool(int(binary[-56], 2)),
             "isFrozen": bool(int(binary[-57], 2)),
             "borrowingEnabled": bool(int(binary[-58], 2)),
-            "reserveFactor": int(binary[-79:-64], 2),
+            "reserveFactor": reserve_factor,
         }
         return configuration_dict
 
