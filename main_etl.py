@@ -80,7 +80,7 @@ print("   --> Extracting atoken transfers users list...")
 object = client_s3.get_object(Bucket=BUCKET, Key=atoken_users_list_input_path)
 atoken_users_data = pd.read_csv(object["Body"])
 
-all_users = pd.concat((pool_users_data, atoken_users_data))
+all_users = pd.concat((pool_users_data, atoken_users_data)).reset_index(drop=True)
 
 print("STEP 1: Collecting pool users balances...")
 
